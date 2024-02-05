@@ -3,6 +3,7 @@ package org.launchcode.techjobs.persistent.controllers;
 import jakarta.validation.Valid;
 import org.launchcode.techjobs.persistent.models.Employer;
 import org.launchcode.techjobs.persistent.models.Job;
+import org.launchcode.techjobs.persistent.models.Skill;
 import org.launchcode.techjobs.persistent.models.data.EmployerRepository;
 import org.launchcode.techjobs.persistent.models.data.JobRepository;
 import org.launchcode.techjobs.persistent.models.data.SkillRepository;
@@ -44,24 +45,34 @@ public class HomeController {
 	    model.addAttribute("title", "Add Job");
         model.addAttribute(new Job());
         model.addAttribute("employers", employerRepository.findAll());
+        model.addAttribute("skills", skillRepository.findAll());
         return "add";
     }
 
     @PostMapping("add")
     public String processAddJobForm(@ModelAttribute @Valid Job newJob,
-                                       Errors errors, Model model, @RequestParam int employerId) {
-        if (errors.hasErrors()) {
-	        model.addAttribute("title", "Add Job");
+                                       Errors errors, Model model, @RequestParam int employerId,
+                                    @RequestParam List<Integer> skills) {
+        if(errors.hasErrors() || skills.size()==1){
+            if(skills.size()==1){
+                model.addAttribute("skills_error","Must choose at least one skill");
+            }
+            model.addAttribute("title","Add Job");
+            model.addAttribute("employers",employerRepository.findAll());
+            model.addAttribute("skills",skillRepository.findAll());
             return "add";
         }
-        Optional<Employer> result = employerRepository.findById(employerId);
+        Optional<Employer> optEmployer = employerRepository.findById(employerId);
 
-        if(result.isEmpty()){
+        if(optEmployer.isEmpty()){
             model.addAttribute("title","Invalid Employer ID");
             return "add";
-        }else {
-            Employer employer = result.get();
+        }else{
+            Employer employer = optEmployer.get();
             newJob.setEmployer(employer);
+
+            List<Skill> skillObjs  = (List<Skill>) skillRepository.findAllById(skills);
+            newJob.setSkills(skillObjs );
 
             jobRepository.save(newJob);
 
@@ -73,7 +84,13 @@ public class HomeController {
     @GetMapping("view/{jobId}")
     public String displayViewJob(Model model, @PathVariable int jobId) {
 
-            return "view";
+        Optional<Job> optJob = jobRepository.findById(jobId);
+        if (optJob.isPresent()) {
+            Job job = optJob.get();
+            model.addAttribute("job", job);
+        }
+
+        return "view";
     }
 
 }
