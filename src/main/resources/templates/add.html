@@ -29,8 +29,10 @@
         <th:block th:each="skill : ${skills}">
             <input type="checkbox" name="skills" th:value="${skill.id}">
             <label th:text="${skill.name}"></label>
+            <span th:errors="${job.skills}" class="error"></span>
         </th:block>
         <a th:href="@{'/skills/add'}">Add Skills</a>
+
     </div>
 
     <input type="submit" value="Add Job" />

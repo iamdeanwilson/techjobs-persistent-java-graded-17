@@ -53,33 +53,31 @@ public class HomeController {
     public String processAddJobForm(@ModelAttribute @Valid Job newJob,
                                        Errors errors, Model model, @RequestParam int employerId,
                                     @RequestParam List<Integer> skills) {
-        if(errors.hasErrors() || skills.size()==1){
-            if(skills.size()==1){
-                model.addAttribute("skills_error","Must choose at least one skill");
-            }
-            model.addAttribute("title","Add Job");
-            model.addAttribute("employers",employerRepository.findAll());
-            model.addAttribute("skills",skillRepository.findAll());
+        if (errors.hasErrors()) {
+            model.addAttribute("title", "Add Job");
+            model.addAttribute("employers", employerRepository.findAll());
+            model.addAttribute("skills", skillRepository.findAll());
             return "add";
         }
-        Optional<Employer> optEmployer = employerRepository.findById(employerId);
 
-        if(optEmployer.isEmpty()){
-            model.addAttribute("title","Invalid Employer ID");
-            return "add";
-        }else{
+        Optional<Employer> optEmployer = employerRepository.findById(employerId);
+        if (optEmployer.isPresent()) {
             Employer employer = optEmployer.get();
             newJob.setEmployer(employer);
-
-            List<Skill> skillObjs  = (List<Skill>) skillRepository.findAllById(skills);
-            newJob.setSkills(skillObjs );
-
-            jobRepository.save(newJob);
-
-            return "redirect:";
         }
 
-    }
+        model.addAttribute("employerId", employerId);
+
+        List<Skill> skillObjs = (List<Skill>) skillRepository.findAllById(skills);
+        newJob.setSkills(skillObjs);
+
+        jobRepository.save(newJob);
+
+        return "redirect:";
+
+        }
+
+
 
     @GetMapping("view/{jobId}")
     public String displayViewJob(Model model, @PathVariable int jobId) {
